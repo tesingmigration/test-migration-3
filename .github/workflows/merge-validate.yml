@@ -1,0 +1,29 @@
+name: Merge Queue Validation
+
+on:
+  merge_group:
+
+jobs:
+  validate-migrations:   # <-- same name as in PR CI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run renumber script
+        run: |
+          chmod +x tools/auto-renumber-migrations.sh
+          ./tools/auto-renumber-migrations.sh
+
+      - name: Commit renumber changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add migrations/
+          git commit -m "Auto-renumber migrations during merge queue" || echo "No changes"
+
+      - name: Quick migration sanity check
+        run: ls -1 migrations/
